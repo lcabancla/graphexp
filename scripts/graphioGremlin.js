@@ -90,15 +90,9 @@ var graphioGremlin = (function(){
 	function search_query() {
 		// Preprocess query
 		let custom_node_query = $('#node_query').val();
-		let custom_edge_query = $('#edge_query').val();
-
 		var gremlin_query_nodes = "nodes = " + custom_node_query + ";";
-		if (custom_edge_query) {
-			var gremlin_query_edges = "edges = " + custom_edge_query + ";";
-			var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
-		} else {
-			var gremlin_query = gremlin_query_nodes + "[nodes]";
-		}
+		var gremlin_query_edges = "edges = " + custom_node_query + ".aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
+		var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
 		console.log(gremlin_query);
 
 		// while busy, show we're doing something in the messageArea.
@@ -113,7 +107,7 @@ var graphioGremlin = (function(){
 			console.log("Node query: "+nodeQuery);
 
 			if (gremlin_query_edges) {
-				var edgeQuery = create_single_command(gremlin_query_edges_no_vars);
+				var edgeQuery = create_single_command(gremlin_query_edges);
 				console.log("Edge query: "+edgeQuery);
 				send_to_server(nodeQuery, null, null, null, function(nodeData){
 					send_to_server(edgeQuery, null, null, null, function(edgeData){
