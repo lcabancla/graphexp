@@ -114,19 +114,8 @@ var graphioGremlin = (function(){
 
 		let server_address = $('#server_address').val();
 		let server_port = $('#server_port').val();
-		let COMMUNICATION_PROTOCOL = $('#server_protocol').val();
-			if (COMMUNICATION_PROTOCOL == 'REST'){
-				let server_url = "http://"+server_address+":"+server_port;
-				run_ajax_request(gremlin_query,server_url,query_type,active_node,message,callback);
-			}
-			else if (COMMUNICATION_PROTOCOL == 'websocket'){
-				let server_url = "ws://"+server_address+":"+server_port+"/gremlin"
-				run_websocket_request(gremlin_query,server_url,query_type,active_node,message,callback);
-			}
-			else {
-				console.log('Bad communication protocol. Check configuration file. Accept "REST" or "websocket" .')
-			}
-
+		let server_url = "http://"+server_address+":"+server_port;
+		run_ajax_request(gremlin_query,server_url,query_type,active_node,message,callback);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
