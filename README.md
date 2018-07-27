@@ -1,3 +1,5 @@
+This is a fork of the project https://github.com/bricaud/graphexp. The modifications include adding custom query fields.
+
 # Graphexp: graph explorer with D3.js
 
 Graphexp is a lightweight web interface to explore and display a graph stored in a Gremlin graph database, via the Gremlin server (version 3.2.x or 3.3.x) .
@@ -8,7 +10,7 @@ Graphexp is under the Apache 2.0 license.
 
 
  A version of Graphexp with the same backend but a nicer UI (using bootstrap) is available at [github.com/erandal/graphexp](https://github.com/erandal/graphexp). You can try it out and give some feedback in issue [#39](https://github.com/bricaud/graphexp/issues/39).
- 
+
 
 ## Configuration
 
@@ -50,7 +52,7 @@ docker run -p 8182:8182 -it --name gremlin-server-websocket bricaud/gremlin-serv
 ```
 ### Running a graphexp Demo with Docker
 
-You may also try out a Graphexp demo on [joov's Github repository](https://github.com/joov/gremlin-demo). It uses Docker compose and can work on Windows.  
+You may also try out a Graphexp demo on [joov's Github repository](https://github.com/joov/gremlin-demo). It uses Docker compose and can work on Windows.
 
 ### Graphexp guidelines
 To get some first visualization of your graph, you may click on the `Search` button, without filling any box. Graphexp will then send a query to the graph DB, asking for the first 50 nodes and their edges.
@@ -58,14 +60,14 @@ To get some first visualization of your graph, you may click on the `Search` but
 The node and edge properties can be automatically retrieved using the `get graph info` button. Pushing this button will also display some graph properties on the left side of the page. If it is not the case, check your configuration, it means Graphexp can not query the graphDB.
 
 When a node of the visualization is clicked, it will become 'active' with a circle surrounding it and its information will be displayed on the right side of the page. Moreover, this action will trigger the display of its neighbors.
-Clicking on an edge will show its properties (without highlighting the edge). 
+Clicking on an edge will show its properties (without highlighting the edge).
 
 When appearing for the first time the nodes will be positioned following a force layout. Drag and drop can be used to pin them in a particular position. Once dragged the nodes will stay at their position. Drag and drop is allowed only for the nodes on the active layer (most recent layer) with no connection with nodes in other layers. See "Visualization concepts" section for more information on the layers.
 
 ### Querying the graphDB
-In the top bar, you can search the graphDB to display a particular node or group of nodes. 
+In the top bar, you can search the graphDB to display a particular node or group of nodes.
 
-* The box `Node label` allows to filter nodes with a particular label during the search. 
+* The box `Node label` allows to filter nodes with a particular label during the search.
 * The box `Node property`, in combination with the `Property value` box, allows to find nodes with a particular keyword or value in their properties. The `Type of search` allows for a perfect (equals) or partial match (Contains). *Note that the 'contains' option will only work with Janusgraph*.
 * The box `Traverse by edge` acts directly in the interactive visualization. If an edge label is entered in the box, clicking on a node will only display its neighbors connected with that type of edge label.
 * The `Results limit` is here to avoid overwhelming the visualization. It fixes the maximal le number of nodes to display per query.
@@ -76,7 +78,7 @@ Note that the input is case-sensitive.
 
 ### URL query string parameters
 
-* `ts` specifies [TraversalSource](http://tinkerpop.apache.org/docs/current/reference/#the-graph-process) in case of multiple different graphs stored in the same database. If unspecified, the default is just `g`. For Example `http://localhost:8183/graphexp.html?ts=gTreeOfLife` replaces `g` by `gTreeOfLife` in all the gremlin queries (for example `g.V()` becomes `gTreeOfLife.V()`). 
+* `ts` specifies [TraversalSource](http://tinkerpop.apache.org/docs/current/reference/#the-graph-process) in case of multiple different graphs stored in the same database. If unspecified, the default is just `g`. For Example `http://localhost:8183/graphexp.html?ts=gTreeOfLife` replaces `g` by `gTreeOfLife` in all the gremlin queries (for example `g.V()` becomes `gTreeOfLife.V()`).
 
 ### Editing the graph
 
@@ -120,7 +122,7 @@ Once your gremlin server is up and running (from the [Docker repository](https:/
 ![graphexptol1](https://github.com/bricaud/graphexp/blob/master/images/graphexptol1.png "Graph exploration Tree of life")
 
 This graph has a single type of nodes (label 'vertex') and a single type of edges (label 'edge'). Each node is a species (taxon) living on earth or extinct, and directed edges represent the link ancestor-descendant.
-The different node properties are displayed on the left. 
+The different node properties are displayed on the left.
 * `CHILDCOUNT` the number of descendent nodes
 * `name` the name of the species
 * `HASPAGE` whether there is a page of information on the [Tree Of Life Project website](http://tolweb.org/tree/home.pages/downloadtree.html)
@@ -130,7 +132,7 @@ The different node properties are displayed on the left.
 * `LEAF` the node is a leaf of the tree (1) or the node does not represent a leaf (it has or will have descendent nodes on the Tree of Life) (0)
 * `PHYLESIS` (0) monophyletic, (1) uncertain, (2) not monophyletic
 
-On the top navigation bar, choose the field `name`, enter 'Dinosauria' as value in the input and click on the `Search` button. Do not forget the capital letter, as the search is case-sensitive. A single node, corresponding to the Dinosaurs clade, should appear in the middle of the page. Click on the node to display node details on the right as well as its ancestors and descendants on the graph. 
+On the top navigation bar, choose the field `name`, enter 'Dinosauria' as value in the input and click on the `Search` button. Do not forget the capital letter, as the search is case-sensitive. A single node, corresponding to the Dinosaurs clade, should appear in the middle of the page. Click on the node to display node details on the right as well as its ancestors and descendants on the graph.
 Check the box `name` on the left bar to display the node names.
 You should see appearing the two subgroups of dinosaurs `Saurischia` and `Ornithischia`, as in the [Wikipedia dinosaur page](https://en.wikipedia.org/wiki/Dinosaur_classification) and an additional `none` node which is the ancestor. This latter node is a taxon that has ancestors and descendants but does not have a name. Note that there are different versions of the tree of life and it is always evolving as researchers find new species.
 ![graphexptol2](https://github.com/bricaud/graphexp/blob/master/images/graphexptol2.png "Graph exploration Tree of life")
@@ -142,8 +144,8 @@ You may also color the nodes according to the values of some of their properties
 
 During the exploration of the `Dinosauria` clade you may find the [bird](https://en.wikipedia.org/wiki/Bird) class `Aves`. They are the only survivors of the Dinosaur group and descendant of dinosaurs with feathers. To see it, enter `Aves` in the value field, press search and climb up the tree.
 
-If you want to explore the world of insects, you may start with the taxon `Insecta` and follow the links. Did you know that spiders are not insects but have they own group `Arachnida`? Can you tell what is the common ancestor between spiders and insects? 
+If you want to explore the world of insects, you may start with the taxon `Insecta` and follow the links. Did you know that spiders are not insects but have they own group `Arachnida`? Can you tell what is the common ancestor between spiders and insects?
 
-You may also be interested in the `Homo` group. 
+You may also be interested in the `Homo` group.
 
 Have a try on the live demo of Graphexp on the [project Github page](https://bricaud.github.io/graphexp/).

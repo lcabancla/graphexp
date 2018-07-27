@@ -94,6 +94,9 @@ var graphioGremlin = (function(){
 		let label_field = $('#label_field').val();
 		let limit_field = $('#limit_field').val();
 		let search_type = $('#search_type').val();
+		let custom_node_query = $('#node_query').val();
+		let custom_edge_query = $('#edge_query').val();
+
 		//console.log(input_field)
 		var filtered_string = input_string;//You may add .replace(/\W+/g, ''); to refuse any character not in the alphabet
 		if (filtered_string.length>50) filtered_string = filtered_string.substring(0,50); // limit string length
@@ -120,16 +123,26 @@ var graphioGremlin = (function(){
 				limit_field = node_limit_per_request;
 		}
 
-		let gremlin_query_nodes = "nodes = " + traversal_source + ".V()" + has_str;
-		if (limit_field !== "" && isInt(limit_field) && limit_field > 0) {
-			gremlin_query_nodes += ".limit(" + limit_field + ").toList();";
+		if (!custom_node_query) {
+			var gremlin_query_nodes = "nodes = " + traversal_source + ".V()" + has_str;
+			if (limit_field !== "" && isInt(limit_field) && limit_field > 0) {
+				gremlin_query_nodes += ".limit(" + limit_field + ").toList();";
+			} else {
+				gremlin_query_nodes += ".toList();";
+			}
+			var gremlin_query_edges = "edges = " + traversal_source + ".V(nodes).aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
+					var gremlin_query_edges_no_vars = "edges = " + traversal_source + ".V()"+has_str+".aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
+					//let gremlin_query_edges_no_vars = "edges = " + traversal_source + ".V()"+has_str+".bothE();";
+			var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
 		} else {
-			gremlin_query_nodes += ".toList();";
+			gremlin_query_nodes = "nodes = " + custom_node_query + ";";
+			if (custom_edge_query) {
+				var gremlin_query_edges = "edges = " + custom_edge_query + ";";
+				var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
+			} else {
+				var gremlin_query = gremlin_query_nodes + "[nodes]";
+			}
 		}
-		let gremlin_query_edges = "edges = " + traversal_source + ".V(nodes).aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
-                let gremlin_query_edges_no_vars = "edges = " + traversal_source + ".V()"+has_str+".aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
-                //let gremlin_query_edges_no_vars = "edges = " + traversal_source + ".V()"+has_str+".bothE();";
-		let gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
 		console.log(gremlin_query);
 
 		// while busy, show we're doing something in the messageArea.
@@ -141,15 +154,24 @@ var graphioGremlin = (function(){
 		var message = "";
 		if (SINGLE_COMMANDS_AND_NO_VARS) {
 			var nodeQuery = create_single_command(gremlin_query_nodes);
-			var edgeQuery = create_single_command(gremlin_query_edges_no_vars);
 			console.log("Node query: "+nodeQuery);
-			console.log("Edge query: "+edgeQuery);
-			send_to_server(nodeQuery, null, null, null, function(nodeData){
-				send_to_server(edgeQuery, null, null, null, function(edgeData){
-					var combinedData = [nodeData,edgeData];
+
+			if (gremlin_query_edges_no_vars) {
+				var edgeQuery = create_single_command(gremlin_query_edges_no_vars);
+				console.log("Edge query: "+edgeQuery);
+				send_to_server(nodeQuery, null, null, null, function(nodeData){
+					send_to_server(edgeQuery, null, null, null, function(edgeData){
+						var combinedData = [nodeData,edgeData];
+						handle_server_answer(combinedData, 'search', null, message);
+					});
+				});
+			} else {
+				send_to_server(nodeQuery, null, null, null, function(nodeData){
+					var combinedData = [nodeData];
 					handle_server_answer(combinedData, 'search', null, message);
 				});
-			});
+			}
+
 		} else {
 			send_to_server(gremlin_query,'search',null,message);
 		}
@@ -205,7 +227,7 @@ var graphioGremlin = (function(){
 			else {
 				console.log('Bad communication protocol. Check configuration file. Accept "REST" or "websocket" .')
 			}
-				
+
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,25 +251,42 @@ var graphioGremlin = (function(){
 							//console.log(Data)
 							if(callback){
 								callback(Data);
-							} else {				
+							} else {
 								handle_server_answer(Data,query_type,active_node,message);
 							}
 			},
 			error: function(result, status, error){
 				console.log("Connection failed. "+status);
+
+				// This will hold all error messages, to be printed in the
+				// output area.
+				let msgs = [];
+
 				if (query_type == 'editGraph'){
-					$('#outputArea').html("<p> Problem accessing the database using REST at "+server_url+"</p>"+
-						"<p> Message: "+status+ ", "+error+" </p>"+
-						"<p> Possible cause: creating a edge with bad node ids "+
-						"(linking nodes not existing in the DB). </p>");
-					$('#messageArea').html('');
+					msgs.push('Problem accessing the database using REST at ' + server_url);
+					msgs.push('Message: ' + status + ', ' + error);
+					msgs.push('Possible cause: creating an edge with bad node ids ' +
+						'(linking nodes not existing in the DB).');
 				} else {
-					$('#outputArea').html("<p> Can't access database using REST at "+server_url+"</p>"+
-						"<p> Message: "+status+ ", "+error+" </p>"+
-						"<p> Check the server configuration "+
-						"or try increasing the REST_TIMEOUT value in the config file.</p>");
-					$('#messageArea').html('');
+					msgs.push('Can\'t access database using REST at ' + server_url);
+					msgs.push('Message: ' + status + ', ' + error);
+					msgs.push('Check the server configuration ' +
+						'or try increasing the REST_TIMEOUT value in the config file.');
 				}
+
+				// If a MalformedQueryException is received, user might be
+				// trying to reach an Amazon Neptune DB. Point them to the
+				// config file as a probable cause.
+				if (result.status === 400
+					&& SINGLE_COMMANDS_AND_NO_VARS === false
+					&& result.hasOwnProperty('responseJSON')
+					&& result.responseJSON.code === 'MalformedQueryException') {
+					msgs.push('If connecting to an Amazon Neptune databse, ensure that ' +
+						'SINGLE_COMMANDS_AND_NO_VARS is set to true in the config file.');
+				}
+
+				$('#outputArea').html(msgs.map(function (i) {return '<p>' + i + '</p>'}).join(''));
+				$('#messageArea').html('');
 			}
 		});
 	}
@@ -269,7 +308,7 @@ var graphioGremlin = (function(){
 
 		var ws = new WebSocket(server_url);
 		ws.onopen = function (event){
-			ws.send(data,{ mask: true});	
+			ws.send(data,{ mask: true});
 		};
 		ws.onerror = function (err){
 			console.log('Connection error using websocket');
@@ -308,7 +347,7 @@ var graphioGremlin = (function(){
 			} else {
 				handle_server_answer(data,query_type,active_node,message);
 			}
-		};		
+		};
 	}
 
 	// Generate uuid for websocket requestId. Code found here:
@@ -361,7 +400,7 @@ var graphioGremlin = (function(){
 			//console.log(data);
 			var graph = arrange_data(data);
 			//console.log(graph)
-			if (query_type=='click') var center_f = 0; //center_f=0 mean no attraction to the center for the nodes 
+			if (query_type=='click') var center_f = 0; //center_f=0 mean no attraction to the center for the nodes
 			else if (query_type=='search') var center_f = 1;
 			else return;
 			graph_viz.refresh_data(graph,center_f,active_node);
@@ -399,7 +438,7 @@ var graphioGremlin = (function(){
 		if (list[i].id == elem) return i;
 	  }
 	  return null;
-	}  
+	}
 
 	/////////////////////////////////////////////////////////////
 	function arrange_datav2(data) {
@@ -456,7 +495,7 @@ var graphioGremlin = (function(){
 	var data_dic = {id:data.id, label:data.label, type:data.type, properties:{}}
 	var prop_dic = data.properties
 	//console.log(prop_dic)
-	for (var key in prop_dic) { 
+	for (var key in prop_dic) {
 		if (prop_dic.hasOwnProperty(key)) {
 			if (data.type == 'vertex'){// Extracting the Vertexproperties (properties of properties for vertices)
 				var property = prop_dic[key];

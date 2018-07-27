@@ -66,7 +66,7 @@ var graph_viz = (function(){
 				var match = _Nodes[node];
 				break;
 			}
-		} 
+		}
 		return match;
 	}
 
@@ -77,7 +77,7 @@ var graph_viz = (function(){
 	function links_data(){
 		return _Links;
 	}
-	
+
 	function create_arrows(edge_in){
 		var edge_data = edge_in.data();
 		var arrow_data = _svg.selectAll('.arrow').data();
@@ -86,7 +86,7 @@ var graph_viz = (function(){
 		_svg.selectAll('.arrow')
 			.data(data)
 			.enter()
-			.append('marker')			
+			.append('marker')
 			.attr('class','arrow')
 			.attr('id', function(d){return 'marker_' + d.id})
 			.attr('markerHeight', 5)
@@ -178,7 +178,7 @@ var graph_viz = (function(){
 
 			// handle the pinned nodes
 			var pinned_Nodes = _svg.selectAll("g").filter(".pinned");
-			var pinned_nodes_data = pinned_Nodes.data(); 
+			var pinned_nodes_data = pinned_Nodes.data();
 			// get the node data and merge it with the pinned nodes
 			_Nodes = d.nodes;
 			_Nodes = updateAdd(_Nodes,pinned_nodes_data);
@@ -195,7 +195,7 @@ var graph_viz = (function(){
 			// and add elements of array2 to array1 when they do not exist in array1
 			var arraytmp = array2.slice(0);
 			var removeValFromIndex = [];
-			array1.forEach(function(d,index,thearray){ 
+			array1.forEach(function(d,index,thearray){
 				for(var i=0;i<arraytmp.length;i++){
 					if (d.id == arraytmp[i].id){
 						thearray[index] = arraytmp[i];
@@ -239,9 +239,9 @@ var graph_viz = (function(){
 			for (var key in dic)
 				list_of_active_links.push(dic[key]);
 			return list_of_active_links;
-		} 
+		}
 
-	
+
 		function transfer_coordinates(Nodes, old_Nodes){
 			// Transfer coordinates from old_nodes to the new nodes with the same id
 			for ( var i=0; i < old_Nodes.length; i++ ) {
@@ -324,7 +324,7 @@ var graph_viz = (function(){
 
 		//////////////////////////////////////
 		// link handling
-	 
+
 		//attach the data
 		var all_links = svg_graph.selectAll(".active_edge")
 			.data(_Links, function(d) { return d.id; });
@@ -332,13 +332,13 @@ var graph_viz = (function(){
 			.data(_Links, function(d) { return d.id; });
 		var all_edgelabels = svg_graph.selectAll(".active_edgelabel")
 			.data(_Links, function(d) { return d.id; });
-	  
+
 		// links not active anymore are classified old_links
 		all_links.exit().classed("old_edge0",true).classed("active_edge",false);
 		all_edgepaths.exit().classed("old_edgepath0",true).classed("active_edgepath",false);
 		all_edgelabels.exit().classed("old_edgelabel0",true).classed("active_edgelabel",false);
 
-		
+
 		// handling active links associated to the data
 		var edgepaths_e = all_edgepaths.enter(),
 			edgelabels_e = all_edgelabels.enter(),
@@ -349,7 +349,7 @@ var graph_viz = (function(){
 		var	edgepaths = decor_out[1],
 			edgelabels = decor_out[2];
 
-	
+
 		// previous links plus new links are merged
 		_links = _links.merge(all_links);
 		edgepaths = edgepaths.merge(all_edgepaths);
@@ -393,8 +393,8 @@ var graph_viz = (function(){
 		///////////////////////////////
 		// Force simulation
 		// simulation model and parameters
-	
-	
+
+
 		_simulation = simulation_start(center_f);
 		// Associate the simulation with the data
 		_simulation.nodes(_Nodes).on("tick", ticked);
@@ -411,7 +411,7 @@ var graph_viz = (function(){
 				.attr("x2", function(d) { return d.target.x; })
 				.attr("y2", function(d) { return d.target.y; });
 			_nodes
-				.attr("transform", function(d) { return "translate(" + d.x + ", " + d.y + ")"; }); 
+				.attr("transform", function(d) { return "translate(" + d.x + ", " + d.y + ")"; });
 
 			edgepaths.attr('d', function (d) {
 				return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
@@ -498,14 +498,15 @@ var graph_viz = (function(){
 				_svg.selectAll(".old_edgepath"+stop_layer).remove();
 				_svg.selectAll(".old_edgelabel"+stop_layer).remove();
 				infobox.display_info(d);
-				graphioGremlin.click_query(d);              
+				// we don't want to display the attached edges when you click on a vertex
+				// graphioGremlin.click_query(d);
 				console.log('event!!')
 			}
 		}
 
 
 		function pin_it(d){
-			d3.event.stopPropagation();		
+			d3.event.stopPropagation();
 			var node_pin = d3.select(this);
 			var pinned_node = d3.select(this.parentNode);
 			//console.log('Pinned!')
