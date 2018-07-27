@@ -89,59 +89,15 @@ var graphioGremlin = (function(){
 
 	function search_query() {
 		// Preprocess query
-		let input_string = $('#search_value').val();
-		let input_field = $('#search_field').val();
-		let label_field = $('#label_field').val();
-		let limit_field = $('#limit_field').val();
-		let search_type = $('#search_type').val();
 		let custom_node_query = $('#node_query').val();
 		let custom_edge_query = $('#edge_query').val();
 
-		//console.log(input_field)
-		var filtered_string = input_string;//You may add .replace(/\W+/g, ''); to refuse any character not in the alphabet
-		if (filtered_string.length>50) filtered_string = filtered_string.substring(0,50); // limit string length
-		// Translate to Gremlin query
-		let has_str = "";
-		if (label_field !== "") {
-			has_str = ".hasLabel('" + label_field + "')";
-		}
-		if (input_field !== "" && input_string !== "") {
-			has_str += ".has('" + input_field + "',";
-			switch (search_type) {
-				case "eq":
-					if (isInt(input_string)){
-						has_str += filtered_string + ")"
-					} else {
-						has_str += "'" + filtered_string + "')"
-					}
-					break;
-				case "contains":
-					has_str += "textContains('" + filtered_string + "'))";
-					break;
-			}
-		} else if (limit_field === "" || limit_field < 0) {
-				limit_field = node_limit_per_request;
-		}
-
-		if (!custom_node_query) {
-			var gremlin_query_nodes = "nodes = " + traversal_source + ".V()" + has_str;
-			if (limit_field !== "" && isInt(limit_field) && limit_field > 0) {
-				gremlin_query_nodes += ".limit(" + limit_field + ").toList();";
-			} else {
-				gremlin_query_nodes += ".toList();";
-			}
-			var gremlin_query_edges = "edges = " + traversal_source + ".V(nodes).aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
-					var gremlin_query_edges_no_vars = "edges = " + traversal_source + ".V()"+has_str+".aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
-					//let gremlin_query_edges_no_vars = "edges = " + traversal_source + ".V()"+has_str+".bothE();";
+		var gremlin_query_nodes = "nodes = " + custom_node_query + ";";
+		if (custom_edge_query) {
+			var gremlin_query_edges = "edges = " + custom_edge_query + ";";
 			var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
 		} else {
-			gremlin_query_nodes = "nodes = " + custom_node_query + ";";
-			if (custom_edge_query) {
-				var gremlin_query_edges = "edges = " + custom_edge_query + ";";
-				var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
-			} else {
-				var gremlin_query = gremlin_query_nodes + "[nodes]";
-			}
+			var gremlin_query = gremlin_query_nodes + "[nodes]";
 		}
 		console.log(gremlin_query);
 
@@ -156,7 +112,7 @@ var graphioGremlin = (function(){
 			var nodeQuery = create_single_command(gremlin_query_nodes);
 			console.log("Node query: "+nodeQuery);
 
-			if (gremlin_query_edges_no_vars) {
+			if (gremlin_query_edges) {
 				var edgeQuery = create_single_command(gremlin_query_edges_no_vars);
 				console.log("Edge query: "+edgeQuery);
 				send_to_server(nodeQuery, null, null, null, function(nodeData){
@@ -182,34 +138,7 @@ var graphioGremlin = (function(){
 			 parseInt(Number(value)) == value &&
 			 !isNaN(parseInt(value, 10));
 	}
-	function click_query(d) {
-		var edge_filter = $('#edge_filter').val();
-		// Gremlin query
-		//var gremlin_query = traversal_source + ".V("+d.id+").bothE().bothV().path()"
-		// 'inject' is necessary in case of an isolated node ('both' would lead to an empty answer)
-		var id = d.id;
-		if(isNaN(id)){ // Add quotes if id is a string (not a number).
-			id = '"'+id+'"';
-		}
-		var gremlin_query_nodes = 'nodes = ' + traversal_source + '.V('+id+').as("node").both('+(edge_filter?'"'+edge_filter+'"':'')+').as("node").select(all,"node").inject(' + traversal_source + '.V('+id+')).unfold()'
-		var gremlin_query_edges = "edges = " + traversal_source + ".V("+id+").bothE("+(edge_filter?"'"+edge_filter+"'":"")+")";
-		var gremlin_query = gremlin_query_nodes+'\n'+gremlin_query_edges+'\n'+'[nodes.toList(),edges.toList()]'
-		// while busy, show we're doing something in the messageArea.
-		$('#messageArea').html('<h3>(loading)</h3>');
-		var message = "<p>Query ID: "+ d.id +"</p>"
-				if(SINGLE_COMMANDS_AND_NO_VARS){
-					var nodeQuery = create_single_command(gremlin_query_nodes);
-					var edgeQuery = create_single_command(gremlin_query_edges);
-					send_to_server(nodeQuery, null, null, null, function(nodeData){
-						send_to_server(edgeQuery, null, null, null, function(edgeData){
-							var combinedData = [nodeData,edgeData];
-							handle_server_answer(combinedData, 'click', d.id, message);
-						});
-					});
-				} else {
-					send_to_server(gremlin_query,'click',d.id,message);
-				}
-	}
+
 
 	function send_to_server(gremlin_query,query_type,active_node,message, callback){
 
@@ -571,7 +500,6 @@ function get_vertex_prop_in_list(vertexProperty){
 		get_edge_properties : get_edge_properties,
 		get_graph_info : get_graph_info,
 		search_query : search_query,
-		click_query : click_query,
 		send_to_server : send_to_server
 	}
 })();

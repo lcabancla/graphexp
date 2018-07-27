@@ -486,22 +486,17 @@ var graph_viz = (function(){
 
 		function clicked(d) {
 			d3.select(".focus_node").remove();
-			var input = document.getElementById ("freeze-in");
-			var isChecked = input.checked;
-			if (isChecked) infobox.display_info(d);
-			else {
-				_simulation.stop();
-				// remove the oldest links and nodes
-				var stop_layer = layers.depth()-1;
-				_svg.selectAll(".old_node"+stop_layer).remove();
-				_svg.selectAll(".old_edge"+stop_layer).remove();
-				_svg.selectAll(".old_edgepath"+stop_layer).remove();
-				_svg.selectAll(".old_edgelabel"+stop_layer).remove();
-				infobox.display_info(d);
-				// we don't want to display the attached edges when you click on a vertex
-				// graphioGremlin.click_query(d);
-				console.log('event!!')
-			}
+			_simulation.stop();
+			// remove the oldest links and nodes
+			var stop_layer = layers.depth()-1;
+			_svg.selectAll(".old_node"+stop_layer).remove();
+			_svg.selectAll(".old_edge"+stop_layer).remove();
+			_svg.selectAll(".old_edgepath"+stop_layer).remove();
+			_svg.selectAll(".old_edgelabel"+stop_layer).remove();
+			infobox.display_info(d);
+
+			console.log('event!!')
+
 		}
 
 
