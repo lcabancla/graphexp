@@ -90,41 +90,17 @@ var graphioGremlin = (function(){
 	function search_query() {
 		// Preprocess query
 		let custom_node_query = $('#node_query').val();
-		var gremlin_query_nodes = "nodes = " + custom_node_query + ";";
-		var gremlin_query_edges = "edges = " + custom_node_query + ".aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
-		var gremlin_query = gremlin_query_nodes + gremlin_query_edges + "[nodes,edges]";
-		console.log(gremlin_query);
+		var custom_edge_query = custom_node_query + ".aggregate('node').outE().as('edge').inV().where(within('node')).select('edge').toList();";
 
 		// while busy, show we're doing something in the messageArea.
 		$('#messageArea').html('<h3>(loading)</h3>');
-		// To display the queries in the message area:
-		//var message_nodes = "<p>Node query: '"+gremlin_query_nodes+"'</p>";
-		//var message_edges = "<p>Edge query: '"+gremlin_query_edges+"'</p>";
-		//var message = message_nodes + message_edges;
 		var message = "";
-		if (SINGLE_COMMANDS_AND_NO_VARS) {
-			var nodeQuery = create_single_command(gremlin_query_nodes);
-			console.log("Node query: "+nodeQuery);
-
-			if (gremlin_query_edges) {
-				var edgeQuery = create_single_command(gremlin_query_edges);
-				console.log("Edge query: "+edgeQuery);
-				send_to_server(nodeQuery, null, null, null, function(nodeData){
-					send_to_server(edgeQuery, null, null, null, function(edgeData){
-						var combinedData = [nodeData,edgeData];
-						handle_server_answer(combinedData, 'search', null, message);
-					});
-				});
-			} else {
-				send_to_server(nodeQuery, null, null, null, function(nodeData){
-					var combinedData = [nodeData];
-					handle_server_answer(combinedData, 'search', null, message);
-				});
-			}
-
-		} else {
-			send_to_server(gremlin_query,'search',null,message);
-		}
+		send_to_server(custom_node_query, null, null, null, function(nodeData){
+			send_to_server(custom_edge_query, null, null, null, function(edgeData){
+				var combinedData = [nodeData,edgeData];
+				handle_server_answer(combinedData, 'search', null, message);
+			});
+		});
 	}
 
 	function isInt(value) {
